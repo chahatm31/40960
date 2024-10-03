@@ -70,6 +70,7 @@ export default function App() {
       color,
       streak: 0,
       lastCompleted: null,
+      completionsToday: 0,
     };
     setHabits([...habits, newHabit]);
     setIsAddDialogOpen(false);
@@ -105,11 +106,17 @@ export default function App() {
 
   const completeHabit = (habit) => {
     const today = new Date().toDateString();
-    const updatedHabit = {
-      ...habit,
-      streak: habit.lastCompleted === today ? habit.streak : habit.streak + 1,
-      lastCompleted: today,
-    };
+    let updatedHabit = { ...habit };
+
+    if (habit.lastCompleted !== today) {
+      updatedHabit.streak += 1;
+      updatedHabit.completionsToday = 1;
+    } else if (habit.completionsToday < parseInt(habit.goal.split(" ")[0])) {
+      updatedHabit.completionsToday += 1;
+    }
+
+    updatedHabit.lastCompleted = today;
+
     setHabits(habits.map((h) => (h.id === habit.id ? updatedHabit : h)));
   };
 
@@ -126,6 +133,7 @@ export default function App() {
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
+        autoFocus
       />
       <Select value={goal} onValueChange={setGoal}>
         <SelectTrigger>
@@ -199,6 +207,9 @@ export default function App() {
           <p className="text-sm font-medium">Streak: {habit.streak} days</p>
           <Progress value={habit.streak} max={30} className="mt-1" />
         </div>
+        <p className="text-sm mt-2">
+          Completed today: {habit.completionsToday} / {habit.goal.split(" ")[0]}
+        </p>
       </CardContent>
       <CardFooter className="justify-end space-x-2">
         {!isArchived && (
@@ -207,6 +218,9 @@ export default function App() {
               variant="outline"
               size="icon"
               onClick={() => completeHabit(habit)}
+              disabled={
+                habit.completionsToday >= parseInt(habit.goal.split(" ")[0])
+              }
             >
               <CheckCircle2 className="h-4 w-4" />
             </Button>
@@ -262,7 +276,8 @@ export default function App() {
         <CheckCircle2 className="h-4 w-4" />
         <AlertTitle>Tip</AlertTitle>
         <AlertDescription>
-          Stay consistent with your habits to build longer streaks!
+          Stay consistent with your habits to build longer streaks! You can
+          complete a habit multiple times a day up to your daily goal.
         </AlertDescription>
       </Alert>
       <div className="mb-6 flex justify-between items-center">
